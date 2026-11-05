@@ -1,0 +1,97 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Pytest / Coverage / Performance
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Environments & Virtual Environments
+.env
+.env.*
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Raw dataset files & archives (large)
+data/raw/
+datasets/
+*.zip
+*.tar
+*.bz2
+*.7z
+# Note: Preserving MURL_DEMO_DATA for testing and demonstrations
+!MURL_DEMO_DATA/**
+!data/samples/**
+
+# External cloned repositories & reference repos
+external_repos/
+references/
+
+# Model Checkpoints, Weights & Serialized Models (download instructions in README)
+checkpoints/
+checkpoints_backup/
+local_models/
+weights/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.bin
+*.h5
+*.pb
+
+# Outputs, Test Runs, Logs & Caches
+outputs/
+output/
+runs/
+test_runs/
+tmp/
+temp/
+cache/
+logs/
+*.log
+task-*.log
+transcript*.jsonl
+
+# Internal Reports & Scratch Logs
+MISSION_*.md
+MURL_FINAL_PLATFORM_AUDIT.md
+REPOSITORY_INTEGRATION_AUDIT.md
+VALIDATION_AUDIT.md
+API_TEST_REPORT.md
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# IDE / Editor artifacts
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Secrets & Private credentials
+*.key
+*.pem
+*.cert
+*.crt
+*.pfx
+secrets/
+credentials.json

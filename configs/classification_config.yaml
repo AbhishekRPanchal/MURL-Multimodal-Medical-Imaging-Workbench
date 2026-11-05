@@ -1,0 +1,28 @@
+experiment_name: "breast_ultrasound_classification"
+seed: 42
+data:
+  metadata_path: "data/processed/dataset_metadata.json"
+  image_size: [256, 256]
+  num_classes: 3
+  class_names: ["benign", "malignant", "normal"]
+  batch_size: 16
+  num_workers: 0
+
+training:
+  epochs: 15
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  loss: "WeightedCrossEntropyLoss"
+  scheduler: "CosineAnnealingLR"
+  output_dir: "checkpoints/classification"
+
+models:
+  baseline:
+    name: "UltrasoundBaselineCNN"
+    in_channels: 3
+    dropout_rate: 0.3
+  transfer:
+    name: "UltrasoundTransferClassifier"
+    architecture: "resnet18"
+    pretrained: true
+    dropout_rate: 0.3

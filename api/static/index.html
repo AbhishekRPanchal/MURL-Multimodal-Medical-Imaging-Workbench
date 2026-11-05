@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MURL &bull; Medical Imaging Workbench</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --benign: #16a34a;
+      --malignant: #dc2626;
+      --normal: #2563eb;
+      --warning: #d97706;
+      --card-radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #0f172a;
+      color: #fff;
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .header-brand { display: flex; align-items: center; gap: 0.85rem; }
+    .header-logo {
+      width: 34px; height: 34px; background: linear-gradient(135deg, #0284c7, #38bdf8);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; color: #fff;
+    }
+    .header-title h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; color: #ffffff; }
+    .header-title p { font-size: 0.75rem; color: #94a3b8; }
+    .header-badges { display: flex; gap: 0.5rem; align-items: center; }
+    .header-badge {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .header-badge.online { color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+
+    .container {
+      max-width: 1300px;
+      width: 100%;
+      margin: 1.25rem auto;
+      padding: 0 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr 440px;
+      gap: 1.25rem;
+      flex: 1;
+    }
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .dropzone {
+      border: 2px dashed var(--border-dark);
+      border-radius: 8px;
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+    .dropzone:hover {
+      border-color: var(--accent);
+      background: #f0f9ff;
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 640px) {
+      .viewer-grid { grid-template-columns: 1fr; }
+    }
+    .viewport {
+      background: #000000;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      position: relative;
+      border: 1px solid #1e293b;
+    }
+    .viewport img, .viewport canvas {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 320px;
+      object-fit: contain;
+      image-rendering: auto;
+    }
+    .viewport-label {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #f8fafc;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.15);
+      z-index: 10;
+    }
+
+    .btn-mpr-ori {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid var(--border-dark);
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-mpr-ori:hover { background: #f1f5f9; color: #0f172a; }
+    .btn-mpr-ori.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.25);
+    }
+    .mpr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .mpr-viewport {
+      background: #000000;
+      border-radius: 6px;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      cursor: pointer;
+    }
+    .mpr-viewport img {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: contain;
+      image-rendering: auto;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border-dark);
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    .export-item {
+      display: block;
+      width: 100%;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.78rem;
+      color: #1e293b;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+    .export-item:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .val-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .val-ready { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .val-neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .val-active { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .val-alert { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    .diag-pill {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+    .diag-benign { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .diag-malignant { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .diag-normal { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+    .meta-table {
+      width: 100%;
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      border-collapse: collapse;
+    }
+    .meta-table td {
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+    }
+    .meta-table td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* PDF Page Selector */
+    .pdf-page-btn {
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-dark);
+      background: #ffffff;
+      color: #334155;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pdf-page-btn:hover { background: #f1f5f9; }
+    .pdf-page-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    /* Findings styling */
+    .finding-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0.6rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    .finding-alert {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    .finding-name {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .finding-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      user-select: none;
+      padding: 0.3rem 0;
+    }
+    details summary:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-brand">
+      <div class="header-logo">M</div>
+      <div class="header-title">
+        <h1>MURL</h1>
+        <p>Medical Imaging Workbench</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="header-badge online">&bull; Ready</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- LEFT COLUMN: Upload & Viewers -->
+    <div>
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Upload Medical Scan</span>
+          <span id="system-status-pill" class="val-badge val-neutral">Ready</span>
+        </div>
+
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" style="display: none;" accept=".png,.jpg,.jpeg,.pdf,.dcm,.dicom,.nii,.nii.gz" onchange="handleFileSelect(this.files[0])">
+          <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">Upload Medical Scan</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Drag & drop or click
+          </div>
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; font-weight: 500;">
+            Supported: <strong>PNG &bull; JPG &bull; PDF &bull; DICOM &bull; NIfTI</strong>
+          </div>
+        </div>
+
+        <!-- PDF Container Workflow -->
+        <div id="pdf-container-box" style="display: none; margin-top: 0.85rem; padding: 0.85rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px;">
+          <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 0.4rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>Uploaded PDF</span>
+            <span id="pdf-page-count-badge" class="val-badge val-active">-- Pages</span>
+          </div>
+          <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.4rem;">Pages:</div>
+          <div id="pdf-pages-selector" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem;"></div>
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 6px;">
+            <span style="font-size: 0.82rem; font-weight: 600;">Selected: <span id="pdf-selected-page-txt">Page 1</span></span>
+            <button type="button" class="btn btn-secondary" onclick="confirmPdfPageSelection()" style="width: auto; padding: 0.35rem 0.85rem; font-size: 0.78rem; font-weight: 700; background: var(--accent); color: #fff; border: none;">
+              Use This Page
+            </button>
+          </div>
+        </div>
+
+        <!-- Unsupported File Type Alert -->
+        <div id="unsupported-file-alert" style="display: none; padding: 0.75rem 0.85rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; margin-top: 0.75rem;">
+          <div style="font-weight: 700; color: #b91c1c; font-size: 0.82rem;">This file could not be identified as a supported medical scan.</div>
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Supported formats: <strong>PNG &bull; JPG &bull; PDF &bull; DICOM &bull; NIfTI</strong></div>
+        </div>
+
+        <!-- Modality Control & Mode Selection Card -->
+        <div id="modality-control-card" style="display: none; margin-top: 0.85rem; padding: 0.85rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px;">
+          <!-- Auto Detected Row -->
+          <div id="auto-detected-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Detected modality:</div>
+              <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; flex-wrap: wrap;">
+                <strong id="badge-modality" style="font-size: 0.95rem; color: #0f172a;">--</strong>
+                <span id="badge-confidence" class="val-badge val-ready">High confidence</span>
+                <span id="badge-dims" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+              </div>
+            </div>
+            <div id="dicom-privacy-pill" style="display: none;">
+              <span class="val-badge val-ready">Research PHI filtered</span>
+            </div>
+          </div>
+
+          <!-- Uncertain Detection Alert (Section 6) -->
+          <div id="uncertain-detection-alert" style="display: none; padding: 0.6rem 0.75rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; margin-bottom: 0.65rem; font-size: 0.78rem; color: #92400e;">
+            <strong>Modality could not be determined confidently.</strong>
+            <div style="margin-top: 0.15rem;">Please select the scan type manually below:</div>
+          </div>
+
+          <!-- Detection Failed Completely Alert (Section 7) -->
+          <div id="detection-failed-alert" style="display: none; padding: 0.6rem 0.75rem; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 0.65rem; font-size: 0.78rem; color: #334155;">
+            <strong>We couldn't identify this scan automatically.</strong>
+            <div style="margin-top: 0.15rem;">Please select the scan type manually below:</div>
+          </div>
+
+          <!-- Dual Mode Toggle (Section 4) -->
+          <div style="border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Analysis mode:</span>
+              <span id="active-mode-label" style="font-size: 0.72rem; color: #2563eb; font-weight: 600;">Mode: Automatic</span>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.82rem; color: #334155;">
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="analysis-mode-radio" id="mode-auto-radio" value="auto" checked onchange="onAnalysisModeChange('auto')">
+                <span>Automatic</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="analysis-mode-radio" id="mode-manual-radio" value="manual" onchange="onAnalysisModeChange('manual')">
+                <span>Manual</span>
+              </label>
+              <button type="button" id="btn-change-manually" onclick="switchToManualMode()" style="background: none; border: none; color: #2563eb; font-size: 0.75rem; text-decoration: underline; cursor: pointer; padding: 0; margin-left: auto;">
+                Is this incorrect? Change manually
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual Selection Panel (Section 2, 3, 10) -->
+          <div id="manual-selection-panel" style="display: none; margin-top: 0.65rem; padding-top: 0.6rem; border-top: 1px solid var(--border);">
+            <div style="font-size: 0.75rem; color: #475569; font-weight: 600; margin-bottom: 0.35rem;">Select scan type:</div>
+            <select id="manual-modality-select" class="form-select" onchange="onManualModalityChange(this.value)" style="width: 100%; padding: 0.45rem 0.65rem; font-size: 0.82rem; border: 1px solid var(--border-dark); border-radius: 5px; background: #ffffff;">
+              <option value="Chest X-ray">Chest X-ray</option>
+              <option value="Breast Ultrasound">Breast Ultrasound</option>
+              <option value="Thyroid Ultrasound">Thyroid Ultrasound</option>
+              <option value="CT">CT</option>
+              <option value="MRI">MRI</option>
+              <option value="DICOM Study">DICOM Study</option>
+              <option value="Other / Research Image">Other / Research Image</option>
+            </select>
+
+            <!-- Task Selector for Breast Ultrasound (Classifier vs Segmentor) -->
+            <div id="manual-task-container" style="margin-top: 0.5rem; display: none;">
+              <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 0.25rem;">Analysis task:</div>
+              <select id="manual-task-select" class="form-select" style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.78rem; border: 1px solid var(--border-dark); border-radius: 4px; background: #ffffff;">
+                <option value="">Recommended (Automatic)</option>
+                <option value="classification">Classification (Benign / Malignant)</option>
+                <option value="segmentation">Lesion Segmentation</option>
+              </select>
+            </div>
+
+            <!-- Incompatibility Warning (Section 5) -->
+            <div id="manual-incompatibility-warning" style="display: none; margin-top: 0.5rem; padding: 0.6rem 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 5px; font-size: 0.75rem; color: #991b1b;">
+              <div style="font-weight: 700;">Image compatibility: Not confirmed</div>
+              <div id="manual-incompatibility-text" style="margin-top: 0.2rem;">The uploaded image appears incompatible with the selected modality. Incompatible cross-modality routing is rejected for clinical safety.</div>
+              <div style="margin-top: 0.25rem; font-weight: 600; color: #b91c1c;">Please upload/select an appropriate image.</div>
+            </div>
+          </div>
+
+          <!-- Separate Tool Selection: Automatic vs Region Segmentation (MedSAM - Section 11) -->
+          <div style="border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.65rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.35rem;">Analysis type:</div>
+            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.8rem; color: #334155;">
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="analysis-tool-radio" id="tool-auto-radio" value="standard" checked onchange="onAnalysisToolChange('standard')">
+                <span>Automatic analysis</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="analysis-tool-radio" id="tool-region-radio" value="region" onchange="onAnalysisToolChange('region')">
+                <span>Region segmentation</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- MedSAM Box Prompt (Section 11) -->
+          <div id="medsam-prompt-box" style="display: none; margin-top: 0.65rem; padding: 0.65rem 0.85rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #166534;">Select Region [x1, y1, x2, y2]</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="text" id="box-prompt-val" class="form-select" style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border-dark); border-radius: 4px; flex: 1;" value="[50, 50, 200, 200]">
+              <button type="button" class="btn btn-secondary" onclick="setPresetPrompt('center')" style="width: auto; padding: 0.4rem 0.65rem; font-size: 0.72rem;">Center</button>
+              <button type="button" class="btn btn-secondary" onclick="setPresetPrompt('upper')" style="width: auto; padding: 0.4rem 0.65rem; font-size: 0.72rem;">Upper</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden container for model select when needed in technical mode -->
+        <select id="model-select" style="display: none;">
+          <option value="">-- Automatically Route Model --</option>
+        </select>
+        <select id="modality-override" style="display: none;">
+          <option value="Ultrasound">Ultrasound</option>
+          <option value="CT">CT</option>
+          <option value="MRI">MRI</option>
+          <option value="X-ray">X-ray</option>
+        </select>
+
+        <!-- Analyze Button -->
+        <button class="btn" id="analyze-btn" onclick="executeInference()" disabled style="margin-top: 0.75rem;">
+          <span id="analyze-btn-text">Analyze</span>
+        </button>
+      </div>
+
+      <!-- Viewer Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Scan Preview</span>
+          <span id="active-viewport-modality" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;"></span>
+        </div>
+
+        <!-- MPR Orientation & Slice Navigation Controls Bar (CT / MRI) -->
+        <div id="mpr-controls-bar" style="display: none; margin-top: 0.25rem; margin-bottom: 0.65rem; padding: 0.45rem 0.65rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <button type="button" class="btn-mpr-ori active" id="btn-ori-axial" onclick="setMprOrientation('axial')">Axial</button>
+            <button type="button" class="btn-mpr-ori" id="btn-ori-coronal" onclick="setMprOrientation('coronal')">Coronal</button>
+            <button type="button" class="btn-mpr-ori" id="btn-ori-sagittal" onclick="setMprOrientation('sagittal')">Sagittal</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; max-width: 260px;">
+            <input type="range" id="mpr-slice-slider" min="1" max="48" value="24" oninput="onMprSliceSliderChange(this.value)" style="flex: 1; accent-color: var(--accent); cursor: pointer;">
+            <span id="mpr-slice-indicator" style="font-size: 0.75rem; font-weight: 700; color: #0f172a; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">Slice 24 / 48</span>
+          </div>
+        </div>
+
+        <!-- Viewport Grid -->
+        <div id="viewer-2d-container" class="viewer-grid">
+          <div class="viewport">
+            <div class="viewport-label" id="label-view-orig">Scan</div>
+            <img id="view-orig" alt="Upload scan" style="display: none;">
+            <span id="orig-placeholder" style="color: #64748b; font-size: 0.82rem;">No scan loaded</span>
+          </div>
+          <div class="viewport">
+            <div class="viewport-label">Overlay</div>
+            <canvas id="view-overlay"></canvas>
+            <span id="overlay-placeholder" style="color: #64748b; font-size: 0.82rem;">Overlay preview</span>
+
+            <!-- Research status card when MRI checkpoint is absent -->
+            <div id="mri-checkpoint-status-card" style="display: none; padding: 1.5rem; text-align: center; max-width: 280px; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">AI segmentation unavailable.</div>
+              <div style="font-size: 0.75rem; color: #16a34a; font-weight: 600; margin-bottom: 0.25rem;">MRI viewing is available.</div>
+              <div style="font-size: 0.72rem; color: #64748b;">No AI segmentation was generated.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Orthogonal Overview Grid (CT / MRI) -->
+        <div id="mpr-container" style="display: none; margin-top: 0.75rem;">
+          <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem;">
+            Orthogonal Views (Click to select)
+          </div>
+          <div class="mpr-grid">
+            <div class="mpr-viewport" onclick="setMprOrientation('axial')" title="Axial view">
+              <div class="viewport-label">Axial</div>
+              <img id="mpr-axial" alt="Axial">
+            </div>
+            <div class="mpr-viewport" onclick="setMprOrientation('coronal')" title="Coronal view">
+              <div class="viewport-label">Coronal</div>
+              <img id="mpr-coronal" alt="Coronal">
+            </div>
+            <div class="mpr-viewport" onclick="setMprOrientation('sagittal')" title="Sagittal view">
+              <div class="viewport-label">Sagittal</div>
+              <img id="mpr-sagittal" alt="Sagittal">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Result & Export -->
+    <div>
+      <div class="card">
+        <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span>Result</span>
+            <span id="result-status-badge" class="val-badge val-neutral">Awaiting Scan</span>
+          </div>
+          <span id="result-mode-badge" style="font-size: 0.72rem; color: #64748b; font-weight: 500;">Analysis: Automatic</span>
+        </div>
+
+        <div id="results-idle" style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 3rem 0;">
+          Upload a medical scan to view results.
+        </div>
+
+        <div id="results-content" style="display: none;">
+          <!-- Simple status alert banner if error or limitation -->
+          <div id="result-alert-box" style="display: none; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.78rem; margin-bottom: 0.85rem;"></div>
+
+          <!-- 1. Breast Ultrasound Panel -->
+          <div id="panel-breast-us" style="display: none;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Classification</div>
+              <div><span id="diag-pill" class="diag-pill">--</span></div>
+              <div style="font-size: 0.82rem; color: #475569; margin-top: 0.35rem;">
+                Confidence: <strong id="conf-val" style="color: #0f172a;">--%</strong>
+              </div>
+            </div>
+
+            <div id="busi-seg-info" style="margin-top: 0.85rem; border-top: 1px solid var(--border); padding-top: 0.6rem; display: none;">
+              <table class="meta-table">
+                <tr><td>Lesion area:</td><td id="res-area">--%</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. Chest X-Ray Panel -->
+          <div id="panel-cxr" style="display: none;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-bottom: 0.4rem;">
+              Possible findings
+            </div>
+            <!-- Findings above threshold -->
+            <div id="cxr-significant-findings" style="display: flex; flex-direction: column; gap: 0.4rem;"></div>
+            
+            <div id="cxr-no-findings" style="display: none; padding: 0.75rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 0.82rem; color: #166534; font-weight: 600;">
+              No significant finding detected.
+            </div>
+
+            <!-- Optional Collapsed Show more -->
+            <details id="cxr-show-more-details" style="margin-top: 0.75rem;">
+              <summary>Show more &blacktriangledown;</summary>
+              <div id="cxr-more-findings-list" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.75rem;"></div>
+            </details>
+          </div>
+
+          <!-- 3. CT TotalSegmentator Panel -->
+          <div id="panel-ct" style="display: none;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #16a34a; margin-bottom: 0.4rem;">
+              Anatomical segmentation available
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600;">
+              Structures detected:
+            </div>
+            <div id="ct-structures-list" style="display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 200px; overflow-y: auto; padding: 0.25rem 0;"></div>
+          </div>
+
+          <!-- 4. Brain MRI BraTS Panel -->
+          <div id="panel-mri" style="display: none;">
+            <div id="mri-result-absent" style="padding: 0.75rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem;">
+              <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">AI segmentation unavailable.</div>
+              <div style="font-size: 0.78rem; color: #16a34a; font-weight: 600; margin-bottom: 0.2rem;">MRI viewing is available.</div>
+              <div style="font-size: 0.72rem; color: #64748b;">No AI segmentation was generated.</div>
+            </div>
+
+            <!-- Present if neural checkpoint is installed -->
+            <div id="mri-result-present" style="display: none;">
+              <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 0.4rem;">Tumor Compartments</div>
+              <table class="meta-table">
+                <tr><td>Whole Tumor:</td><td id="mri-wt-vol">-- cm³</td></tr>
+                <tr><td>Tumor Core:</td><td id="mri-tc-vol">-- cm³</td></tr>
+                <tr><td>Enhancing Tumor:</td><td id="mri-et-vol">-- cm³</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. Thyroid Ultrasound Panel -->
+          <div id="panel-thyroid" style="display: none;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 0.4rem;">
+              Ultrasound Analysis
+            </div>
+            <table class="meta-table">
+              <tr><td>Shape:</td><td id="thyroid-shape-txt">--</td></tr>
+              <tr><td>Aspect Ratio:</td><td id="thyroid-ratio">--</td></tr>
+              <tr><td>Measurement:</td><td style="color: #64748b;">Image-based measurement</td></tr>
+            </table>
+          </div>
+
+          <!-- 6. MedSAM Universal Segmentor Panel -->
+          <div id="panel-medsam" style="display: none;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #166534; margin-bottom: 0.4rem;">
+              Prompt-Guided Segmentation
+            </div>
+            <div id="medsam-res-info">
+              <table class="meta-table">
+                <tr><td>Lesion Area:</td><td id="medsam-area-txt">--%</td></tr>
+                <tr><td>Mask Pixels:</td><td id="medsam-pixels-txt">-- px</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- DICOM metadata if present -->
+          <div id="panel-dicom-meta" style="display: none; margin-top: 0.85rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+            <table class="meta-table">
+              <tr><td>Modality:</td><td id="dicom-ui-modality">--</td></tr>
+              <tr><td>Body region:</td><td id="dicom-ui-body">--</td></tr>
+              <tr><td>Image size:</td><td id="dicom-ui-size">--</td></tr>
+            </table>
+          </div>
+
+          <!-- Export Controls -->
+          <div style="margin-top: 1rem; position: relative; display: inline-block;">
+            <button class="btn btn-secondary" id="btn-export-dropdown" onclick="toggleExportMenu(event)" style="font-size: 0.82rem; width: auto; padding: 0.5rem 1rem;">
+              <span>Export result</span>
+              <span style="font-size: 0.75rem; margin-left: 0.25rem;">▾</span>
+            </button>
+            <div id="export-dropdown-menu" style="display: none; position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); z-index: 1000; min-width: 210px; padding: 0.35rem 0;">
+              <!-- Dynamically populated with options -->
+            </div>
+          </div>
+
+          <!-- Technical Details Collapsible Section -->
+          <details id="tech-details" style="margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+            <summary>Technical details &blacktriangleright;</summary>
+            <div style="margin-top: 0.5rem; font-size: 0.72rem; color: #475569;">
+              <table class="meta-table" style="font-size: 0.72rem;">
+                <tr><td>Model ID:</td><td id="tech-model-id" style="font-family: monospace;">--</td></tr>
+                <tr><td>Architecture:</td><td id="tech-arch">--</td></tr>
+                <tr><td>Input format:</td><td id="tech-input-fmt">--</td></tr>
+                <tr><td>Execution time:</td><td id="tech-time">--</td></tr>
+                <tr><td>Status:</td><td id="tech-status">--</td></tr>
+                <tr><td>Privacy:</td><td>Research privacy filter active</td></tr>
+              </table>
+              <div id="tech-extra-info" style="margin-top: 0.4rem; color: #64748b; font-size: 0.7rem;"></div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; font-size: 0.72rem; color: #94a3b8; margin: 2rem 0 1rem;">
+    MURL &bull; Medical Imaging Workbench
+  </footer>
+
+  <script>
+    let activeFile = null;
+    let activeFileBytes = null;
+    let inspectionData = null;
+    let currentAnalysisResult = null;
+    let activeNiftiMeta = null;
+    let activeMprOrientation = 'axial';
+    let activeMprSliceIndex = 24;
+    let activePdfPages = [];
+    let selectedPdfPageNum = 1;
+    let currentAnalysisMode = 'auto'; // 'auto' | 'manual'
+    let currentAnalysisTool = 'standard'; // 'standard' | 'region'
+
+    // Load registered models in background for router compatibility
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/models');
+        const models = await res.json();
+        const sel = document.getElementById('model-select');
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.model_id;
+          opt.innerText = m.name;
+          sel.appendChild(opt);
+        });
+      } catch (err) {
+        console.error("Failed to load model registry:", err);
+      }
+    });
+
+    function initMprControls(niftiMeta) {
+      activeNiftiMeta = niftiMeta;
+      const bar = document.getElementById('mpr-controls-bar');
+      if (!niftiMeta) {
+        if (bar) bar.style.display = 'none';
+        return;
+      }
+      if (bar) bar.style.display = 'flex';
+      setMprOrientation('axial');
+    }
+
+    function setMprOrientation(ori) {
+      activeMprOrientation = ori;
+      ['axial', 'coronal', 'sagittal'].forEach(o => {
+        const btn = document.getElementById(`btn-ori-${o}`);
+        if (btn) {
+          if (o === ori) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+
+      const label = document.getElementById('label-view-orig');
+      if (label) {
+        label.innerText = `Scan (${ori.toUpperCase()})`;
+      }
+
+      if (!activeNiftiMeta) return;
+      let maxSlices = 48;
+      const stacks = activeNiftiMeta.slice_stacks;
+      if (stacks && stacks.total_counts && stacks.total_counts[ori]) {
+        maxSlices = stacks.total_counts[ori];
+      } else if (activeNiftiMeta.dimensions) {
+        const [h, w, d] = activeNiftiMeta.dimensions;
+        if (ori === 'axial') maxSlices = d || 48;
+        else if (ori === 'coronal') maxSlices = w || 48;
+        else maxSlices = h || 48;
+      }
+
+      const slider = document.getElementById('mpr-slice-slider');
+      if (slider) {
+        slider.min = 1;
+        slider.max = maxSlices;
+        slider.value = Math.floor(maxSlices / 2);
+        onMprSliceSliderChange(slider.value);
+      }
+    }
+
+    function onMprSliceSliderChange(val) {
+      activeMprSliceIndex = parseInt(val, 10);
+      const slider = document.getElementById('mpr-slice-slider');
+      const maxSlices = slider ? (slider.max || 48) : 48;
+      const indicator = document.getElementById('mpr-slice-indicator');
+      if (indicator) {
+        indicator.innerText = `Slice ${activeMprSliceIndex} / ${maxSlices}`;
+      }
+
+      if (!activeNiftiMeta) return;
+      const stacks = activeNiftiMeta.slice_stacks;
+      const origImg = document.getElementById('view-orig');
+
+      if (stacks && stacks[activeMprOrientation] && stacks[activeMprOrientation].length > 0) {
+        const list = stacks[activeMprOrientation];
+        const listIdx = Math.min(list.length - 1, Math.max(0, Math.round((activeMprSliceIndex - 1) / (maxSlices - 1 || 1) * (list.length - 1))));
+        origImg.src = "data:image/png;base64," + list[listIdx];
+        origImg.style.display = 'block';
+        document.getElementById('orig-placeholder').style.display = 'none';
+      } else if (activeNiftiMeta.orthogonal_previews) {
+        const p = activeNiftiMeta.orthogonal_previews;
+        let b64 = p.axial_b64 || p.axial_wt_b64;
+        if (activeMprOrientation === 'coronal') b64 = p.coronal_b64 || p.coronal_wt_b64;
+        else if (activeMprOrientation === 'sagittal') b64 = p.sagittal_b64 || p.sagittal_wt_b64;
+        if (b64) {
+          origImg.src = "data:image/png;base64," + b64;
+          origImg.style.display = 'block';
+          document.getElementById('orig-placeholder').style.display = 'none';
+        }
+      }
+    }
+
+    async function handleFileSelect(file) {
+      if (!file) return;
+      activeFile = file;
+
+      const statusPill = document.getElementById('system-status-pill');
+      statusPill.innerText = "Processing...";
+      statusPill.className = "val-badge val-active";
+
+      // Reset panels & alerts
+      document.getElementById('pdf-container-box').style.display = 'none';
+      document.getElementById('unsupported-file-alert').style.display = 'none';
+      document.getElementById('uncertain-detection-alert').style.display = 'none';
+      document.getElementById('detection-failed-alert').style.display = 'none';
+      document.getElementById('manual-incompatibility-warning').style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/inspect', { method: 'POST', body: formData });
+        const data = await res.json();
+        inspectionData = data;
+
+        if (data.status === 'error' || !data.format) {
+          statusPill.innerText = "Unsupported scan";
+          statusPill.className = "val-badge val-alert";
+          document.getElementById('modality-control-card').style.display = 'none';
+          document.getElementById('unsupported-file-alert').style.display = 'block';
+          document.getElementById('analyze-btn').disabled = true;
+          return;
+        }
+
+        displayInspectionData(data);
+      } catch (err) {
+        statusPill.innerText = "Unsupported scan";
+        statusPill.className = "val-badge val-alert";
+        document.getElementById('modality-control-card').style.display = 'none';
+        document.getElementById('unsupported-file-alert').style.display = 'block';
+        document.getElementById('analyze-btn').disabled = true;
+      }
+    }
+
+    function displayInspectionData(data) {
+      const statusPill = document.getElementById('system-status-pill');
+      statusPill.innerText = "Ready";
+      statusPill.className = "val-badge val-ready";
+
+      // If PDF, handle multi-page workflow
+      if (data.format === 'pdf' && data.pdf_info && data.pdf_info.pages) {
+        handlePdfInspection(data.pdf_info);
+        return;
+      }
+
+      activateScanInspectionDisplay(data);
+    }
+
+    function handlePdfInspection(pdfInfo) {
+      activePdfPages = pdfInfo.pages || [];
+      selectedPdfPageNum = 1;
+
+      const pdfBox = document.getElementById('pdf-container-box');
+      pdfBox.style.display = 'block';
+
+      document.getElementById('pdf-page-count-badge').innerText = `${pdfInfo.num_pages} ${pdfInfo.num_pages === 1 ? 'Page' : 'Pages'}`;
+
+      const selContainer = document.getElementById('pdf-pages-selector');
+      selContainer.innerHTML = '';
+
+      activePdfPages.forEach((p, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pdf-page-btn' + (p.page_number === 1 ? ' active' : '');
+        btn.id = `pdf-page-btn-${p.page_number}`;
+        btn.innerText = `[ ${p.page_number} ]`;
+        btn.onclick = () => selectPdfPage(p.page_number);
+        selContainer.appendChild(btn);
+      });
+
+      selectPdfPage(1);
+    }
+
+    function selectPdfPage(pageNum) {
+      selectedPdfPageNum = pageNum;
+      document.getElementById('pdf-selected-page-txt').innerText = `Page ${pageNum}`;
+
+      activePdfPages.forEach(p => {
+        const b = document.getElementById(`pdf-page-btn-${p.page_number}`);
+        if (b) {
+          if (p.page_number === pageNum) b.classList.add('active');
+          else b.classList.remove('active');
+        }
+      });
+
+      const target = activePdfPages.find(p => p.page_number === pageNum);
+      if (target && target.preview_b64) {
+        const img = document.getElementById('view-orig');
+        img.src = "data:image/png;base64," + target.preview_b64;
+        img.style.display = 'block';
+        document.getElementById('orig-placeholder').style.display = 'none';
+        document.getElementById('badge-dims').innerText = `Image size: ${target.width} × ${target.height}`;
+      }
+    }
+
+    async function confirmPdfPageSelection() {
+      if (!activeFile) return;
+
+      const statusPill = document.getElementById('system-status-pill');
+      statusPill.innerText = "Processing...";
+      statusPill.className = "val-badge val-active";
+
+      const formData = new FormData();
+      formData.append('file', activeFile);
+      formData.append('page_number', selectedPdfPageNum);
+
+      try {
+        const res = await fetch('/api/pdf/page', { method: 'POST', body: formData });
+        const pageData = await res.json();
+        
+        statusPill.innerText = "Ready";
+        statusPill.className = "val-badge val-ready";
+
+        // Convert page preview to standard scan presentation
+        inspectionData = {
+          format: 'pdf',
+          modality_detection: pageData.modality_detection || { modality: "Unknown" },
+          dimensions: [pageData.height, pageData.width]
+        };
+
+        activateScanInspectionDisplay(inspectionData);
+
+        const img = document.getElementById('view-orig');
+        img.src = "data:image/png;base64," + pageData.image_b64;
+        img.style.display = 'block';
+        document.getElementById('orig-placeholder').style.display = 'none';
+        document.getElementById('label-view-orig').innerText = `Scan (Page ${selectedPdfPageNum})`;
+        document.getElementById('badge-dims').innerText = `Image size: ${pageData.width} × ${pageData.height}`;
+      } catch (err) {
+        statusPill.innerText = "Could not read file";
+        statusPill.className = "val-badge val-alert";
+        alert("Unable to open this PDF page: " + err.message);
+      }
+    }
+
+    function formatModalityName(mod) {
+      if (mod === "X-ray") return "Chest X-ray";
+      if (mod === "Ultrasound") return "Breast Ultrasound";
+      if (mod === "CT") return "CT";
+      if (mod === "MRI") return "MRI";
+      return mod;
+    }
+
+    function activateScanInspectionDisplay(data) {
+      document.getElementById('modality-control-card').style.display = 'block';
+      document.getElementById('analyze-btn').disabled = false;
+
+      const modDet = data.modality_detection || {};
+      const mod = modDet.modality || "Unknown";
+      const confVal = (modDet.confidence !== undefined) ? modDet.confidence : 0.85;
+      const isFailed = (mod === "Unknown" || modDet.status === "failed");
+      const isUncertain = (!isFailed && confVal < 0.60);
+
+      // Reset alert displays
+      document.getElementById('uncertain-detection-alert').style.display = 'none';
+      document.getElementById('detection-failed-alert').style.display = 'none';
+
+      const confBadge = document.getElementById('badge-confidence');
+
+      if (isFailed) {
+        document.getElementById('badge-modality').innerText = "Unknown";
+        confBadge.innerText = "Low confidence";
+        confBadge.className = "val-badge val-alert";
+        document.getElementById('detection-failed-alert').style.display = 'block';
+        switchToManualMode();
+      } else if (isUncertain) {
+        document.getElementById('badge-modality').innerText = formatModalityName(mod);
+        confBadge.innerText = "Low confidence";
+        confBadge.className = "val-badge val-neutral";
+        document.getElementById('uncertain-detection-alert').style.display = 'block';
+        switchToManualMode();
+      } else {
+        document.getElementById('badge-modality').innerText = formatModalityName(mod);
+        if (confVal >= 0.80) {
+          confBadge.innerText = "High confidence";
+          confBadge.className = "val-badge val-ready";
+        } else {
+          confBadge.innerText = "Medium confidence";
+          confBadge.className = "val-badge val-active";
+        }
+        // Set to auto mode by default
+        onAnalysisModeChange('auto');
+      }
+
+      // Pre-select appropriate item in manual dropdown
+      const sel = document.getElementById('manual-modality-select');
+      if (sel) {
+        const friendly = formatModalityName(mod);
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === friendly || sel.options[i].text === friendly) {
+            sel.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      // DICOM Privacy & info
+      if (data.dicom_metadata) {
+        document.getElementById('dicom-privacy-pill').style.display = 'block';
+        const d = data.dicom_metadata;
+        document.getElementById('panel-dicom-meta').style.display = 'block';
+        document.getElementById('dicom-ui-modality').innerText = d.modality || mod;
+        document.getElementById('dicom-ui-body').innerText = d.body_part_examined || 'Unspecified';
+        document.getElementById('dicom-ui-size').innerText = `${d.rows || 512} × ${d.columns || 512}`;
+        document.getElementById('badge-dims').innerText = `Image size: ${d.rows || 512} × ${d.columns || 512}`;
+      } else {
+        document.getElementById('dicom-privacy-pill').style.display = 'none';
+        document.getElementById('panel-dicom-meta').style.display = 'none';
+      }
+
+      // Reset MPR and viewports
+      const mprContainer = document.getElementById('mpr-container');
+      document.getElementById('mri-checkpoint-status-card').style.display = 'none';
+      document.getElementById('view-overlay').style.display = 'block';
+      document.getElementById('overlay-placeholder').style.display = 'inline';
+
+      if (data.nifti_metadata) {
+        initMprControls(data.nifti_metadata);
+        mprContainer.style.display = 'block';
+        const p = data.nifti_metadata.orthogonal_previews;
+        if (p) {
+          document.getElementById('mpr-axial').src = "data:image/png;base64," + p.axial_b64;
+          document.getElementById('mpr-coronal').src = "data:image/png;base64," + p.coronal_b64;
+          document.getElementById('mpr-sagittal').src = "data:image/png;base64," + p.sagittal_b64;
+        }
+        document.getElementById('badge-dims').innerText = `Image size: ${data.nifti_metadata.dimensions.join(" × ")}`;
+      } else if (activeFile && data.format !== 'pdf') {
+        initMprControls(null);
+        mprContainer.style.display = 'none';
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.getElementById('view-orig');
+          img.src = e.target.result;
+          img.style.display = 'block';
+          document.getElementById('orig-placeholder').style.display = 'none';
+          img.onload = () => {
+            document.getElementById('badge-dims').innerText = `Image size: ${img.naturalWidth} × ${img.naturalHeight}`;
+          };
+        };
+        reader.readAsDataURL(activeFile);
+      }
+    }
+
+    function onAnalysisModeChange(mode) {
+      currentAnalysisMode = mode;
+      const isAuto = (mode === 'auto');
+      const autoRadio = document.getElementById('mode-auto-radio');
+      const manualRadio = document.getElementById('mode-manual-radio');
+      if (autoRadio) autoRadio.checked = isAuto;
+      if (manualRadio) manualRadio.checked = !isAuto;
+
+      const label = document.getElementById('active-mode-label');
+      if (label) label.innerText = isAuto ? 'Mode: Automatic' : 'Mode: Manual';
+
+      const manualPanel = document.getElementById('manual-selection-panel');
+      if (manualPanel) manualPanel.style.display = isAuto ? 'none' : 'block';
+
+      if (!isAuto) {
+        validateManualCompatibility();
+      } else {
+        const warn = document.getElementById('manual-incompatibility-warning');
+        if (warn) warn.style.display = 'none';
+        const analyzeBtn = document.getElementById('analyze-btn');
+        if (analyzeBtn && activeFile) analyzeBtn.disabled = false;
+      }
+    }
+
+    function switchToManualMode() {
+      onAnalysisModeChange('manual');
+    }
+
+    function onManualModalityChange(val) {
+      const taskContainer = document.getElementById('manual-task-container');
+      if (taskContainer) {
+        taskContainer.style.display = (val === 'Breast Ultrasound') ? 'block' : 'none';
+      }
+      validateManualCompatibility();
+    }
+
+    function validateManualCompatibility() {
+      if (currentAnalysisMode !== 'manual') return true;
+      const select = document.getElementById('manual-modality-select');
+      const manualChoice = select ? select.value : 'Chest X-ray';
+      const warnBox = document.getElementById('manual-incompatibility-warning');
+      const warnTxt = document.getElementById('manual-incompatibility-text');
+      const analyzeBtn = document.getElementById('analyze-btn');
+
+      const detMod = (inspectionData && inspectionData.modality_detection && inspectionData.modality_detection.modality) || 'Unknown';
+      let incompatible = false;
+      let expectedKind = 'image';
+
+      if (manualChoice === 'Breast Ultrasound' || manualChoice === 'Thyroid Ultrasound') {
+        expectedKind = 'ultrasound';
+        if (detMod === 'X-ray' || detMod === 'CT' || detMod === 'MRI') {
+          incompatible = true;
+        }
+      } else if (manualChoice === 'Chest X-ray') {
+        expectedKind = 'radiograph / X-ray';
+        if (detMod === 'Ultrasound' || detMod === 'CT' || detMod === 'MRI') {
+          incompatible = true;
+        }
+      } else if (manualChoice === 'CT') {
+        expectedKind = 'CT volume';
+        if (detMod === 'Ultrasound' || detMod === 'X-ray') {
+          incompatible = true;
+        }
+      } else if (manualChoice === 'MRI') {
+        expectedKind = 'MRI volume';
+        if (detMod === 'Ultrasound' || detMod === 'X-ray') {
+          incompatible = true;
+        }
+      }
+
+      if (incompatible) {
+        if (warnBox) warnBox.style.display = 'block';
+        if (warnTxt) {
+          warnTxt.innerHTML = `Selected modality: <strong>${manualChoice}</strong><br>Image compatibility: <strong>Not confirmed</strong><br>Please upload/select an appropriate ${expectedKind} scan.`;
+        }
+        if (analyzeBtn) analyzeBtn.disabled = true;
+        return false;
+      } else {
+        if (warnBox) warnBox.style.display = 'none';
+        if (analyzeBtn && activeFile) analyzeBtn.disabled = false;
+        return true;
+      }
+    }
+
+    function onAnalysisToolChange(tool) {
+      currentAnalysisTool = tool;
+      const isStd = (tool === 'standard');
+      const stdRadio = document.getElementById('tool-auto-radio');
+      const regRadio = document.getElementById('tool-region-radio');
+      if (stdRadio) stdRadio.checked = isStd;
+      if (regRadio) regRadio.checked = !isStd;
+
+      const promptBox = document.getElementById('medsam-prompt-box');
+      if (promptBox) promptBox.style.display = isStd ? 'none' : 'block';
+
+      if (!isStd) {
+        drawPromptBoxOnCanvas();
+      } else {
+        clearOverlay();
+      }
+    }
+
+    async function executeInference() {
+      if (!activeFile) return;
+      const btn = document.getElementById('analyze-btn');
+      const btnTxt = document.getElementById('analyze-btn-text');
+      const statusPill = document.getElementById('system-status-pill');
+      btn.disabled = true;
+      btnTxt.innerText = "Analyzing...";
+      statusPill.innerText = "Processing...";
+      statusPill.className = "val-badge val-active";
+
+      const formData = new FormData();
+      formData.append('file', activeFile);
+
+      // If PDF, pass selected page number
+      if (inspectionData && inspectionData.format === 'pdf') {
+        formData.append('page_number', selectedPdfPageNum);
+      }
+
+      // Pass routing / tool directives
+      if (currentAnalysisTool === 'region') {
+        formData.append('model_id', 'medsam_vit_b');
+        const boxVal = document.getElementById('box-prompt-val').value;
+        if (boxVal) formData.append('box_prompt_json', boxVal);
+      } else if (currentAnalysisMode === 'manual') {
+        const manualMod = document.getElementById('manual-modality-select').value;
+        formData.append('modality_override', manualMod);
+        if (manualMod === 'Breast Ultrasound') {
+          const taskVal = document.getElementById('manual-task-select').value;
+          if (taskVal) formData.append('task', taskVal);
+        }
+      }
+
+      try {
+        const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.status === 'error') {
+          document.getElementById('results-idle').style.display = 'none';
+          document.getElementById('results-content').style.display = 'block';
+          hideAllSpecificPanels();
+
+          const alertBox = document.getElementById('result-alert-box');
+          alertBox.style.display = 'block';
+          alertBox.style.background = '#fee2e2';
+          alertBox.style.border = '1px solid #fca5a5';
+          alertBox.style.color = '#b91c1c';
+          alertBox.innerHTML = `<strong>Analysis unavailable:</strong> ${data.error || 'Could not complete scan analysis.'}`;
+
+          const resBadge = document.getElementById('result-status-badge');
+          resBadge.innerText = 'Analysis unavailable';
+          resBadge.className = 'val-badge val-alert';
+          statusPill.innerText = 'Analysis unavailable';
+          statusPill.className = 'val-badge val-alert';
+
+          if (data.analysis_mode) {
+            document.getElementById('result-mode-badge').innerText = `Analysis: ${data.analysis_mode}`;
+          }
+        } else {
+          currentAnalysisResult = data;
+          displayAnalysisResults(data);
+          statusPill.innerText = 'Ready';
+          statusPill.className = 'val-badge val-ready';
+        }
+      } catch (err) {
+        alert("Analysis error: " + err.message);
+        statusPill.innerText = 'Analysis unavailable';
+        statusPill.className = 'val-badge val-alert';
+      } finally {
+        btn.disabled = false;
+        btnTxt.innerText = "Analyze";
+      }
+    }
+
+    function hideAllSpecificPanels() {
+      document.getElementById('panel-breast-us').style.display = 'none';
+      document.getElementById('panel-cxr').style.display = 'none';
+      document.getElementById('panel-ct').style.display = 'none';
+      document.getElementById('panel-mri').style.display = 'none';
+      document.getElementById('panel-thyroid').style.display = 'none';
+      document.getElementById('panel-medsam').style.display = 'none';
+      document.getElementById('result-alert-box').style.display = 'none';
+    }
+
+    function displayAnalysisResults(data) {
+      document.getElementById('results-idle').style.display = 'none';
+      document.getElementById('results-content').style.display = 'block';
+      hideAllSpecificPanels();
+
+      const pred = data.prediction;
+      const fmt = pred.formatted_results || {};
+
+      // Reset overlay and status cards
+      document.getElementById('mri-checkpoint-status-card').style.display = 'none';
+      document.getElementById('view-overlay').style.display = 'block';
+
+      // Status Badge
+      const statusPill = document.getElementById('result-status-badge');
+      statusPill.innerText = "Analysis complete";
+      statusPill.className = "val-badge val-ready";
+
+      // Result Mode Badge
+      const modeBadge = document.getElementById('result-mode-badge');
+      if (modeBadge) {
+        modeBadge.innerText = `Analysis: ${data.analysis_mode || 'Automatic'}`;
+      }
+
+      // 1. Breast Ultrasound
+      if (fmt.predicted_class || fmt.lesion_area_percentage !== undefined) {
+        document.getElementById('panel-breast-us').style.display = 'block';
+        if (fmt.predicted_class) {
+          const pill = document.getElementById('diag-pill');
+          pill.innerText = fmt.predicted_class;
+          pill.className = 'diag-pill diag-' + fmt.predicted_class;
+          const rawConf = fmt.confidence !== undefined ? fmt.confidence : 0;
+          const confPct = rawConf <= 1.0 ? (rawConf * 100) : rawConf;
+          document.getElementById('conf-val').innerText = confPct.toFixed(2) + '%';
+        }
+        if (fmt.lesion_area_percentage !== undefined) {
+          document.getElementById('busi-seg-info').style.display = 'block';
+          document.getElementById('res-area').innerText = fmt.lesion_area_percentage + '%';
+          if (fmt.derived_bounding_boxes && fmt.derived_bounding_boxes.length > 0) {
+            drawBoundingBoxes(fmt.derived_bounding_boxes);
+          } else {
+            clearOverlay();
+          }
+        }
+      }
+
+      // 2. Chest X-Ray
+      else if (fmt.pathologies_evaluated) {
+        document.getElementById('panel-cxr').style.display = 'block';
+
+        const sigContainer = document.getElementById('cxr-significant-findings');
+        const noFindingsBox = document.getElementById('cxr-no-findings');
+        const moreDetails = document.getElementById('cxr-show-more-details');
+        const moreList = document.getElementById('cxr-more-findings-list');
+
+        sigContainer.innerHTML = '';
+        moreList.innerHTML = '';
+
+        const allFindings = fmt.top_findings || [];
+        const positiveFindings = allFindings.filter(f => f.threshold_exceeded);
+        const otherFindings = allFindings.filter(f => !f.threshold_exceeded);
+
+        if (positiveFindings.length > 0) {
+          noFindingsBox.style.display = 'none';
+          positiveFindings.forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'finding-item finding-alert';
+            item.innerHTML = `
+              <span class="finding-name">&bull; ${f.pathology}</span>
+              <span class="finding-badge" style="background: #fee2e2; color: #b91c1c;">High confidence (${f.probability_percent}%)</span>
+            `;
+            sigContainer.appendChild(item);
+          });
+        } else {
+          noFindingsBox.style.display = 'block';
+        }
+
+        // Additional findings in collapsible Show more
+        if (otherFindings.length > 0) {
+          moreDetails.style.display = 'block';
+          otherFindings.forEach(f => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.padding = '2px 0';
+            row.innerHTML = `
+              <span style="color: #475569;">${f.pathology}</span>
+              <span style="font-weight: 600; color: #64748b;">${f.probability_percent}%</span>
+            `;
+            moreList.appendChild(row);
+          });
+        } else {
+          moreDetails.style.display = 'none';
+        }
+      }
+
+      // 3. CT TotalSegmentator
+      else if (fmt.structures_detected_count !== undefined) {
+        document.getElementById('panel-ct').style.display = 'block';
+        const listDiv = document.getElementById('ct-structures-list');
+        listDiv.innerHTML = '';
+        (fmt.top_detected_structures || []).forEach(s => {
+          const pill = document.createElement('span');
+          pill.style.padding = '0.2rem 0.5rem';
+          pill.style.background = '#f0fdf4';
+          pill.style.border = '1px solid #bbf7d0';
+          pill.style.borderRadius = '4px';
+          pill.style.fontSize = '0.75rem';
+          pill.style.color = '#166534';
+          pill.style.fontWeight = '600';
+          pill.innerText = s.structure_name;
+          listDiv.appendChild(pill);
+        });
+
+        if (fmt.multilabel_previews && fmt.multilabel_previews.axial_seg_b64) {
+          drawBase64Overlay(fmt.multilabel_previews.axial_seg_b64);
+        }
+      }
+
+      // 4. Brain MRI
+      else if (pred.model_id === "monai_brats_mri_segmentor" || fmt.compartments !== undefined) {
+        document.getElementById('panel-mri').style.display = 'block';
+        const hasTrainedWeights = Boolean(fmt.is_trained_ai_segmentation || (fmt.compartments && fmt.compartments.length > 0));
+
+        if (!hasTrainedWeights) {
+          document.getElementById('mri-result-absent').style.display = 'block';
+          document.getElementById('mri-result-present').style.display = 'none';
+          document.getElementById('mri-checkpoint-status-card').style.display = 'flex';
+          document.getElementById('view-overlay').style.display = 'none';
+          document.getElementById('overlay-placeholder').style.display = 'none';
+        } else {
+          document.getElementById('mri-result-absent').style.display = 'none';
+          document.getElementById('mri-result-present').style.display = 'block';
+          if (fmt.primary_volumes_cm3) {
+            document.getElementById('mri-wt-vol').innerText = `${fmt.primary_volumes_cm3.whole_tumor || 0} cm³`;
+            document.getElementById('mri-tc-vol').innerText = `${fmt.primary_volumes_cm3.tumor_core || 0} cm³`;
+            document.getElementById('mri-et-vol').innerText = `${fmt.primary_volumes_cm3.enhancing_tumor || 0} cm³`;
+          }
+          document.getElementById('mri-checkpoint-status-card').style.display = 'none';
+          document.getElementById('view-overlay').style.display = 'block';
+          if (fmt.mask_overlay_b64) drawBase64Overlay(fmt.mask_overlay_b64);
+        }
+
+        if (fmt.slice_stacks) {
+          if (!activeNiftiMeta) activeNiftiMeta = {};
+          activeNiftiMeta.slice_stacks = fmt.slice_stacks;
+          if (fmt.multiplanar_previews) activeNiftiMeta.orthogonal_previews = fmt.multiplanar_previews;
+          initMprControls(activeNiftiMeta);
+        }
+      }
+
+      // 5. Thyroid Ultrasound
+      else if (pred.model_id === "tn3k_thyroid_segmentor" || fmt.tirads_features !== undefined) {
+        document.getElementById('panel-thyroid').style.display = 'block';
+        const ratio = (fmt.tirads_features && fmt.tirads_features.height_to_width_ratio) || 1.0;
+        const shape = ratio > 1.0 ? "Taller than wide" : "Wider than tall";
+        document.getElementById('thyroid-shape-txt').innerText = shape;
+        document.getElementById('thyroid-ratio').innerText = ratio;
+
+        if (fmt.mask_overlay_b64) {
+          drawBase64Overlay(fmt.mask_overlay_b64);
+        } else {
+          clearOverlay();
+        }
+      }
+
+      // 6. MedSAM Universal Segmentor
+      else if (pred.model_id === "medsam_vit_b") {
+        document.getElementById('panel-medsam').style.display = 'block';
+        if (fmt.lesion_area_percentage !== undefined) {
+          document.getElementById('medsam-area-txt').innerText = fmt.lesion_area_percentage + '%';
+          document.getElementById('medsam-pixels-txt').innerText = (fmt.lesion_pixel_count || 0).toLocaleString() + ' px';
+        }
+        if (fmt.mask_overlay_b64) {
+          drawBase64Overlay(fmt.mask_overlay_b64);
+        } else {
+          drawPromptBoxOnCanvas();
+        }
+      }
+
+      // Populate Technical Details (Collapsed by default)
+      document.getElementById('tech-model-id').innerText = pred.model_id || 'N/A';
+      document.getElementById('tech-arch').innerText = getFriendlyArchitecture(pred.model_id);
+      document.getElementById('tech-input-fmt').innerText = (data.format_report && data.format_report.format) || 'Standard';
+      document.getElementById('tech-time').innerText = `${pred.inference_time_ms} ms (${pred.execution_device})`;
+      document.getElementById('tech-status').innerText = fmt.pipeline_status || 'Verified';
+      document.getElementById('tech-extra-info').innerText = `Active Modality: ${data.active_modality} | Status: ${pred.status}`;
+
+      // Update Context-Aware Export Options
+      updateExportOptions(data);
+    }
+
+    function getFriendlyArchitecture(modelId) {
+      if (modelId === "busi_resnet18_classifier") return "PyTorch ResNet-18";
+      if (modelId === "busi_monai_unet_segmentor") return "MONAI UNet 2D";
+      if (modelId === "chexpert_chest_xray_classifier") return "DenseNet-121 (TorchXRayVision)";
+      if (modelId === "totalsegmentator_ct") return "nnU-Net v2 (Task 297 Fast 3mm)";
+      if (modelId === "monai_brats_mri_segmentor") return "MONAI SegResNet (3D)";
+      if (modelId === "tn3k_thyroid_segmentor") return "Acoustic Morphometry";
+      if (modelId === "medsam_vit_b") return "Vision Transformer (ViT-B)";
+      return modelId || "Standard";
+    }
+
+    function setPresetPrompt(preset) {
+      const boxInput = document.getElementById('box-prompt-val');
+      if (preset === 'center') {
+        boxInput.value = "[64, 64, 192, 192]";
+      } else if (preset === 'upper') {
+        boxInput.value = "[40, 30, 210, 120]";
+      }
+      drawPromptBoxOnCanvas();
+    }
+
+    function drawPromptBoxOnCanvas() {
+      try {
+        const val = JSON.parse(document.getElementById('box-prompt-val').value);
+        if (Array.isArray(val) && val.length === 4) {
+          const canvas = document.getElementById('view-overlay');
+          const ctx = canvas.getContext('2d');
+          const img = document.getElementById('view-orig');
+          canvas.width = img.naturalWidth || 256;
+          canvas.height = img.naturalHeight || 256;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          const [x1, y1, x2, y2] = val;
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.2)';
+          ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+          document.getElementById('overlay-placeholder').style.display = 'none';
+        }
+      } catch (e) {}
+    }
+
+    function drawBoundingBoxes(boxes) {
+      const img = document.getElementById('view-orig');
+      const canvas = document.getElementById('view-overlay');
+      const ctx = canvas.getContext('2d');
+      document.getElementById('overlay-placeholder').style.display = 'none';
+
+      canvas.width = img.naturalWidth || 256;
+      canvas.height = img.naturalHeight || 256;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#16a34a';
+      ctx.lineWidth = 3;
+      ctx.fillStyle = 'rgba(22, 163, 74, 0.25)';
+
+      for (const box of boxes) {
+        const [x, y, w, h] = box.box_xywh;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillRect(x, y, w, h);
+      }
+    }
+
+    function drawBase64Overlay(b64) {
+      const canvas = document.getElementById('view-overlay');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+        document.getElementById('overlay-placeholder').style.display = 'none';
+      };
+      img.src = "data:image/png;base64," + b64;
+    }
+
+    function clearOverlay() {
+      const canvas = document.getElementById('view-overlay');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('overlay-placeholder').style.display = 'block';
+    }
+
+    function toggleExportMenu(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('export-dropdown-menu');
+      if (!menu) return;
+      if (menu.style.display === 'none' || !menu.style.display) {
+        menu.style.display = 'block';
+      } else {
+        menu.style.display = 'none';
+      }
+    }
+
+    // Dismiss export menu when clicking outside
+    window.addEventListener('click', (e) => {
+      const menu = document.getElementById('export-dropdown-menu');
+      const btn = document.getElementById('btn-export-dropdown');
+      if (menu && menu.style.display === 'block') {
+        if (e.target !== btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+          menu.style.display = 'none';
+        }
+      }
+    });
+
+    async function updateExportOptions(data) {
+      const menu = document.getElementById('export-dropdown-menu');
+      if (!menu) return;
+      menu.innerHTML = '<div style="padding: 0.35rem 0.85rem; font-size: 0.72rem; color: #94a3b8;">Loading options...</div>';
+
+      if (!data) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('analysis_json', JSON.stringify(data));
+        const res = await fetch('/api/export/formats', { method: 'POST', body: formData });
+        const resData = await res.json();
+        const formats = resData.formats || [];
+
+        menu.innerHTML = '';
+        if (formats.length === 0) {
+          menu.innerHTML = '<div style="padding: 0.35rem 0.85rem; font-size: 0.72rem; color: #94a3b8;">No export formats available</div>';
+          return;
+        }
+
+        formats.forEach(f => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'export-item';
+          btn.innerText = f.label;
+          btn.title = f.description;
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            menu.style.display = 'none';
+            triggerDownload(f.id);
+          };
+          menu.appendChild(btn);
+        });
+      } catch (err) {
+        console.error("Failed to load export options:", err);
+        menu.innerHTML = '';
+        const jsonBtn = document.createElement('button');
+        jsonBtn.type = 'button';
+        jsonBtn.className = 'export-item';
+        jsonBtn.innerText = 'JSON Document (.json)';
+        jsonBtn.onclick = () => { triggerDownload('json'); };
+        menu.appendChild(jsonBtn);
+      }
+    }
+
+    async function triggerDownload(formatId) {
+      if (!currentAnalysisResult) {
+        alert("Please perform analysis before exporting.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-export-dropdown');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span>Exporting ${formatId.toUpperCase()}...</span>`;
+
+      try {
+        const formData = new FormData();
+        formData.append('analysis_json', JSON.stringify(currentAnalysisResult));
+
+        const response = await fetch(`/api/export/${formatId}`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          let errMsg = "Export failed";
+          try {
+            const err = await response.json();
+            errMsg = err.detail || errMsg;
+          } catch(e) {}
+          alert(`Export error: ${errMsg}`);
+          return;
+        }
+
+        const blob = await response.blob();
+        let filename = `MURL_${formatId}_${Date.now()}`;
+        const disposition = response.headers.get('Content-Disposition');
+        if (disposition && disposition.indexOf('filename=') !== -1) {
+          const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+          if (matches != null && matches[1]) {
+            filename = matches[1].replace(/['"]/g, '');
+          }
+        }
+
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+      } catch (err) {
+        alert(`Export failed: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+  </script>
+</body>
+</html>
